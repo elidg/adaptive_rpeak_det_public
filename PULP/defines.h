@@ -4,7 +4,8 @@
 //========= DEFINE PRINT OUTPUT ========//
 // #define PRINT_SIG_MF
 // #define PRINT_RELEN
-#define PRINT_RPEAKS
+// #define PRINT_RPEAKS
+#define PRINT_ERROR_RPEAKS
 
 //========= DEFINE PRINT DEBUG =========//
 // #define PRINT_DEBUG
@@ -35,7 +36,9 @@
 #define MODULE_MF
 #define MODULE_RELEN
 #define MODULE_RPEAK_REWARD
-
+#ifdef MODULE_RPEAK_REWARD
+#define MODULE_ERROR_DETECTION
+#endif
 //======== DEFINE WINDOW OVERLAP ==========//
 // Copy the MF or the RelEn signal in the overlapping window. The two defines are mutually exclusive (only one can be uncommented)
 // #define OVERLAP_MF 
@@ -52,6 +55,11 @@
 #else
 #define OFFSET_MF 300
 #endif
+#define FACTOR_MS 1000
+#define FACTOR_RATIO_RR 1000
+#define PERCENTILE_LOO_LOW 641 //This is the 0.5th percentile of the RR distribution detected by the clustering using the leave-one-out approach for each subject (it is subject-specific)
+#define PERCENTILE_LOO_HIGH 1492 //This is the 99.5th percentile of the RR distribution detected by the clustering using the leave-one-out approach for each subject (it is subject-specific)
+
 
 //========= DEFINE PROFILING ================//
 // #define HWPERF_MODULE_RPEAK_REWARD	//start profiling module RPEAK
