@@ -5,6 +5,7 @@ PULP_APP_FC_SRCS  = main.c \
 				       Morph_filt/morpho_filtering.c \
 				       REWARD_R_peak_detection/relativeEnergy.c \
 				       REWARD_R_peak_detection/peakDetection.c \
+				       error_detection/error_detection.c \
 				       profiling/profile.c  	
 CORES  ?= 1
 CTARGET ?= 0

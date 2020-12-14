@@ -12,6 +12,7 @@
 // #define PRINT_SIG_INPUT_PEAKS
 // #define PRINT_THR
 // #define PRINT_RPEAKS_BEFORE_T_CHECK
+// #define PRINT_DEBUG_ERRDET
 
 //=========== Sampling frequency ========== //
 #define ECG_SAMPLING_FREQUENCY 250
@@ -55,11 +56,6 @@
 #else
 #define OFFSET_MF 300
 #endif
-#define FACTOR_MS 1000
-#define FACTOR_RATIO_RR 1000
-#define PERCENTILE_LOO_LOW 641 //This is the 0.5th percentile of the RR distribution detected by the clustering using the leave-one-out approach for each subject (it is subject-specific)
-#define PERCENTILE_LOO_HIGH 1492 //This is the 99.5th percentile of the RR distribution detected by the clustering using the leave-one-out approach for each subject (it is subject-specific)
-
 
 //========= DEFINE PROFILING ================//
 // #define HWPERF_MODULE_RPEAK_REWARD	//start profiling module RPEAK
