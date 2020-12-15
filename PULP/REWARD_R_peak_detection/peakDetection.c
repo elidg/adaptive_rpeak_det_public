@@ -4,12 +4,12 @@
 #define ABS(X) ((X<0)?(-X):(X))
 
 //Variables used to detect peaks
-RT_L2_DATA uint32_t lastPeakIndex = 0;
+RT_L2_DATA int32_t lastPeakIndex = 0;
 RT_L2_DATA int16_t lastPeakAmplitude = 0;
 RT_L2_DATA uint32_t numberOfAnalyzedWindows = 0;
 RT_L2_DATA uint8_t lastPeakWasIncomplete = 0;
 RT_L2_DATA uint16_t lastPeakWidth = INT16_MAX;
-RT_L2_DATA uint32_t lastPeakIndex_BF = 0;
+RT_L2_DATA int32_t lastPeakIndex_BF = 0;
 RT_L2_DATA int16_t lastPeakWidth_BF = 0;
 RT_L2_DATA int16_t lastPeakAmplitude_BF = 0;
 
@@ -47,8 +47,8 @@ void maxAndMin(int16_t ecg[BUFFER_SIZE], int16_t* max, int16_t* min) {
 }
 
 //Get the index of the maximum value within a certain range of ecg values in the window
-uint32_t getIndexOfMaxInRange(int16_t ecg[BUFFER_SIZE], uint16_t startIndex, uint16_t stopIndex) {
-	uint32_t result = 0;
+int32_t getIndexOfMaxInRange(int16_t ecg[BUFFER_SIZE], uint16_t startIndex, uint16_t stopIndex) {
+	int32_t result = 0;
 	int16_t maxEcg = -9999;
 	for (int16_t i = startIndex; i < stopIndex; i++) {
 		if (ecg[i] > maxEcg) {
@@ -59,8 +59,8 @@ uint32_t getIndexOfMaxInRange(int16_t ecg[BUFFER_SIZE], uint16_t startIndex, uin
 	return result;
 }
 
-uint32_t getIndexOfMinInRange(int16_t ecg[BUFFER_SIZE], uint16_t startIndex, uint16_t stopIndex) {
-	uint32_t result = 0;
+int32_t getIndexOfMinInRange(int16_t ecg[BUFFER_SIZE], uint16_t startIndex, uint16_t stopIndex) {
+	int32_t result = 0;
 	int16_t minEcg = INT16_MAX;
 	for (int16_t i = startIndex; i < stopIndex; i++) {
 		if (ecg[i] < minEcg) {
@@ -92,16 +92,16 @@ void resetPeakDetection() {
 //		  numberOfAnalyzedWindows - the number of windows that have been analyzed so far. Used to compute peak indices relative to the beginning of the signal
 //Output: array of peak indices
 
-void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], uint8_t numberOfFoundPeaks, uint32_t *output) {
+void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], uint8_t numberOfFoundPeaks, int32_t *output, int32_t offset_ind) {
 	numberOfFoundPeaks = 0;
 	uint8_t thisWindowIsIncomplete = 0;
 
-	uint32_t tempOutput[TEMPORARY_PEAK_BUFFER_SIZE]; //temporary indices of all found peaks before the false peaks are removed
+	int32_t tempOutput[TEMPORARY_PEAK_BUFFER_SIZE]; //temporary indices of all found peaks before the false peaks are removed
 	int16_t peakAmplitudes[TEMPORARY_PEAK_BUFFER_SIZE]; //amplitudes of found peaks, used to detect false positives
 	int16_t peakWidths[TEMPORARY_PEAK_BUFFER_SIZE];
 
 	//Index and amplitude of the last peak of the previous window
-	uint32_t lastPeakIndexTemp = lastPeakIndex;
+	int32_t lastPeakIndexTemp = lastPeakIndex;
 	int16_t lastPeakAmplitudeTemp = lastPeakAmplitude;
 
 	//Generate the hysteresis thresholds
@@ -115,6 +115,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 		tempOutput[i] = 0;
 
 	uint16_t numberOfAnalyzedPeaks = 0; //# of detected peaks by the algorithm
+	uint16_t peakWidth; //peak width used in the T wave check
 
 #ifdef NEGATIVE_PEAK
 	if ( (ABS(max - avg)) < (TH_NEGATIVE_PEAK*ABS(min - avg))/100) { //Negative peak
@@ -131,7 +132,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 		uint8_t analyzingPeak = 0; //boolean indicating if a peak is being analyzed
 		uint16_t startIndex = 0; //start index of analyzed peak
 		uint16_t endIndex = 0; //end index of analyzed peak
-
+		int32_t minIndex = 0; //index of a local minimum (for negative peaks)
 
 		//Loop through Xecg
 		for (uint16_t i = 0; i < BUFFER_SIZE; i++) {
@@ -148,15 +149,15 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 
 				//There is a previous peak that needs to be finished
 				if (startIndex < 0.03*ECG_SAMPLING_FREQUENCY && lastPeakWasIncomplete == 1 && numberOfAnalyzedPeaks == 0) {
-					uint32_t minIndex = getIndexOfMinInRange(ecgWindow, startIndex, endIndex);
-					uint16_t peakWidth = lastPeakWidth + endIndex - startIndex;
+					minIndex = getIndexOfMinInRange(ecgWindow, startIndex, endIndex);
+					peakWidth = lastPeakWidth + endIndex - startIndex;
 
 					if (ecgWindow[minIndex] < lastPeakAmplitudeTemp) { //this peak is "more negative" than the previous one
-						tempOutput[numberOfAnalyzedPeaks] = minIndex;
+						tempOutput[numberOfAnalyzedPeaks] = minIndex + offset_ind;
 						peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[minIndex];
 					}
 					else { //last peak amplitude was "more negative"
-						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp;
+						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
 						peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					}
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
@@ -165,23 +166,23 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 				}//The previous peak finished at the boundary and its value needs to be recorded
 				else if (lastPeakWasIncomplete == 1 && numberOfAnalyzedPeaks == 0) {
 					//Save previous peak
-					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp;
+					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
 					peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					peakWidths[numberOfAnalyzedPeaks] = lastPeakWidth;
 					numberOfAnalyzedPeaks++;
 
 					//Save new peak
-					uint32_t minIndex = getIndexOfMinInRange(ecgWindow, startIndex, endIndex);
-					uint16_t peakWidth = endIndex - startIndex;
-					tempOutput[numberOfAnalyzedPeaks] = minIndex;
+					minIndex = getIndexOfMinInRange(ecgWindow, startIndex, endIndex);
+					peakWidth = endIndex - startIndex;
+					tempOutput[numberOfAnalyzedPeaks] = minIndex + offset_ind;
 					peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[minIndex];
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
 					numberOfAnalyzedPeaks++;
 				}
 				else {//We do not need to care about previous peaks
-					uint32_t minIndex = getIndexOfMinInRange(ecgWindow, startIndex, endIndex);
-					uint16_t peakWidth = endIndex - startIndex;
-					tempOutput[numberOfAnalyzedPeaks] = minIndex;
+					minIndex = getIndexOfMinInRange(ecgWindow, startIndex, endIndex);
+					peakWidth = endIndex - startIndex;
+					tempOutput[numberOfAnalyzedPeaks] = minIndex+ offset_ind;
 					peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[minIndex];
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
 					numberOfAnalyzedPeaks++;
@@ -189,7 +190,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 
 			}
 			else if (analyzingPeak == 1 && i == BUFFER_SIZE - 1) { //peak is being analyzed when window ends
-				uint32_t minIndex = getIndexOfMinInRange(ecgWindow, startIndex, BUFFER_SIZE);
+				minIndex = getIndexOfMinInRange(ecgWindow, startIndex, BUFFER_SIZE);
 				lastPeakAmplitude = ecgWindow[minIndex];
 				lastPeakIndex = minIndex;
 				lastPeakWidth = BUFFER_SIZE - 1 - startIndex;
@@ -211,6 +212,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 		uint8_t analyzingPeak = 0; //boolean indicating if a peak is being analyzed
 		uint16_t startIndex = 0; //start index of analyzed peak
 		uint16_t endIndex = 0; //end index of analyzed peak
+		int32_t maxIndex = 0; //index of a local maximum (for positive peaks)
 
 		//Loop through Xecg
 		for (uint16_t i = 0; i < BUFFER_SIZE; i++) {
@@ -227,15 +229,15 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 
 				//There is a previous peak that needs to be finished
 				if (startIndex < 0.03*ECG_SAMPLING_FREQUENCY && lastPeakWasIncomplete == 1 && numberOfAnalyzedPeaks == 0) {
-					uint32_t maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, endIndex);
-					uint16_t peakWidth = lastPeakWidth + endIndex - startIndex;
+					maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, endIndex);
+					peakWidth = lastPeakWidth + endIndex - startIndex;
 
 					if (ecgWindow[maxIndex] > lastPeakAmplitudeTemp) { //this peak is greater than the previous one
-						tempOutput[numberOfAnalyzedPeaks] = maxIndex;
+						tempOutput[numberOfAnalyzedPeaks] = maxIndex + offset_ind;
 						peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[maxIndex];
 					}
 					else { //last peak amplitude was greater
-						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp;
+						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
 						peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					}
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
@@ -245,23 +247,23 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 				}//The previous peak finished at the boundary and its value needs to be recorded
 				else if (lastPeakWasIncomplete == 1 && numberOfAnalyzedPeaks == 0) {
 					//Save previous peak
-					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp;
+					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
 					peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					peakWidths[numberOfAnalyzedPeaks] = lastPeakWidth;
 					numberOfAnalyzedPeaks++;
 
 					//Save new peak
-					uint32_t maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, endIndex);
-					uint16_t peakWidth = endIndex - startIndex;
-					tempOutput[numberOfAnalyzedPeaks] = maxIndex;
+					maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, endIndex);
+					peakWidth = endIndex - startIndex;
+					tempOutput[numberOfAnalyzedPeaks] = maxIndex + offset_ind;
 					peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[maxIndex];
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
 					numberOfAnalyzedPeaks++;
 				}
 				else {//We do not need to care about previous peaks
-					uint32_t maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, endIndex);
-					uint16_t peakWidth = endIndex - startIndex;
-					tempOutput[numberOfAnalyzedPeaks] = maxIndex;
+					maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, endIndex);
+					peakWidth = endIndex - startIndex;
+					tempOutput[numberOfAnalyzedPeaks] = maxIndex + offset_ind;
 					peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[maxIndex];
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
 					numberOfAnalyzedPeaks++;
@@ -270,7 +272,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 
 			}
 			else if (analyzingPeak == 1 && i == BUFFER_SIZE - 1) { //peak is being analyzed when window ends
-				uint32_t maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, BUFFER_SIZE);
+				maxIndex = getIndexOfMaxInRange(ecgWindow, startIndex, BUFFER_SIZE);
 				lastPeakAmplitude = ecgWindow[maxIndex];
 				lastPeakIndex = maxIndex;
 				lastPeakWidth = BUFFER_SIZE - 1 - startIndex;
@@ -371,8 +373,9 @@ uint16_t startnext = 0;
 void getPeaks_w(int32_t *arg[]){
 
 	int16_t* xRE = (int16_t*) arg[0];
-	uint32_t* indicesRpeaks = (uint32_t*) arg[1];
-	uint32_t outputSingleBuff[MAX_BEATS_PER_MIN];
+	int32_t* indicesRpeaks = arg[1];
+	int32_t* offset_ind = arg[2];
+	int32_t outputSingleBuff[MAX_BEATS_PER_MIN];
 	//This should be set to 0 every time we delineate 8 beats
 	startnext = 0;
 	numberOfAnalyzedWindows = 0;
@@ -387,7 +390,7 @@ void getPeaks_w(int32_t *arg[]){
 			outputSingleBuff[i] = 0;
 		}
 	  
-		getPeakIndicesThroughHysteresisComparator(&xRE[idx*(BUFFER_SIZE)], numberOfDetectedPeaks, outputSingleBuff);
+		getPeakIndicesThroughHysteresisComparator(&xRE[idx*(BUFFER_SIZE)], numberOfDetectedPeaks, outputSingleBuff, *offset_ind);
 		for(int32_t m=0; m<MAX_BEATS_PER_MIN; m++)
 		{
 			if(outputSingleBuff[m] > 0)
