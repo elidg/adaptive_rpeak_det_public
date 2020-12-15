@@ -24,12 +24,12 @@ RT_L2_DATA int32_t buffSize_windowRelEn;
 #endif
 
 #ifdef MODULE_RPEAK_REWARD
-RT_L2_DATA int32_t *argRW_Rpeak[2];
+RT_L2_DATA int32_t *argRW_Rpeak[3];
 RT_L2_DATA int32_t indicesRpeaks[H_B+1];
 #endif
 
 #ifdef MODULE_ERROR_DETECTION
-RT_L2_DATA int32_t *argErrDet[6];
+RT_L2_DATA int32_t *argErrDet[5];
 RT_L2_DATA int32_t lastRpeak = 0;
 RT_L2_DATA int32_t lastRR = 0;
 RT_L2_DATA int32_t error_RWindow = 0;
@@ -84,6 +84,7 @@ void adaptiveRpeakDetection(){
 
     argRW_Rpeak[0] = (int32_t*) &ecg_buff[LONG_WINDOW+(LONG_WINDOW + dim)*NLEADS];
     argRW_Rpeak[1] = indicesRpeaks;
+    argRW_Rpeak[2] = &offset_ind;
 #endif
 
 
@@ -208,7 +209,7 @@ void adaptiveRpeakDetection(){
 
     #ifdef PRINT_RPEAKS
         for(int32_t indR=0; indR<rpeaks_counter; indR++) {
-            printf("%d\n", (indicesRpeaks[indR]) + offset_ind);
+            printf("%d\n", indicesRpeaks[indR]);
         }
     #endif
 
@@ -220,8 +221,7 @@ void adaptiveRpeakDetection(){
         argErrDet[1] = &rWindow; 
         argErrDet[2] = &lastRR;        
         argErrDet[3] = indicesRpeaks;
-        argErrDet[4] = &offset_ind;                       
-        argErrDet[5] = &lastRpeak;
+        argErrDet[4] = &lastRpeak;
         error_RWindow = errorDetection(argErrDet);
 
     #ifdef PRINT_ERROR_RPEAKS
