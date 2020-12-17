@@ -42,15 +42,15 @@
 #endif
 //======== DEFINE WINDOW OVERLAP ==========//
 // Copy the MF or the RelEn signal in the overlapping window. The two defines are mutually exclusive (only one can be uncommented)
-// #define OVERLAP_MF 
-#define OVERLAP_RELEN
+// #define OVERLAP_MF // not yet validated for this implementation
+#define OVERLAP_RELEN //default and validated for this implementation
 
 //======== DEFINE WINDOWS (ONLY FOR DEBUG) ==========//
 // #define ONLY_FIRST_WINDOW
 
 #define N 1
 #define H_B 30
-#define dim  (int16_t) (BUFFER_SIZE * N) //((BUFFER_SIZE * N) + LONG_WINDOW)
+#define DIM  (int16_t) (BUFFER_SIZE * N) //((BUFFER_SIZE * N) + LONG_WINDOW)
 #if ECG_SAMPLING_FREQUENCY == 250
 #define OFFSET_MF 150
 #else

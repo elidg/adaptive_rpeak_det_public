@@ -856,7 +856,7 @@ void filterWindows(int32_t *arg[])
 	}
 
 	for(int indsample = 0; indsample<*bufferSize; indsample++) {
-		ecg_buffer[indsample + (dim+LONG_WINDOW) * (*i_lead)] = filterSample(off, ecg_buffer[indsample + (dim+LONG_WINDOW) * (*i_lead)], (*i_lead));
+		ecg_buffer[indsample + (DIM+LONG_WINDOW) * (*i_lead)] = filterSample(off, ecg_buffer[indsample + (DIM+LONG_WINDOW) * (*i_lead)], (*i_lead));
 		off++;
 	}
 }

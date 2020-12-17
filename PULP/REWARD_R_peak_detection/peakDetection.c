@@ -157,7 +157,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 						peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[minIndex];
 					}
 					else { //last peak amplitude was "more negative"
-						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
+						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - DIM;
 						peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					}
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
@@ -166,7 +166,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 				}//The previous peak finished at the boundary and its value needs to be recorded
 				else if (lastPeakWasIncomplete == 1 && numberOfAnalyzedPeaks == 0) {
 					//Save previous peak
-					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
+					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - DIM;
 					peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					peakWidths[numberOfAnalyzedPeaks] = lastPeakWidth;
 					numberOfAnalyzedPeaks++;
@@ -237,7 +237,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 						peakAmplitudes[numberOfAnalyzedPeaks] = ecgWindow[maxIndex];
 					}
 					else { //last peak amplitude was greater
-						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
+						tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - DIM;
 						peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					}
 					peakWidths[numberOfAnalyzedPeaks] = peakWidth;
@@ -247,7 +247,7 @@ void getPeakIndicesThroughHysteresisComparator(int16_t ecgWindow[BUFFER_SIZE], u
 				}//The previous peak finished at the boundary and its value needs to be recorded
 				else if (lastPeakWasIncomplete == 1 && numberOfAnalyzedPeaks == 0) {
 					//Save previous peak
-					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - dim;
+					tempOutput[numberOfAnalyzedPeaks] = lastPeakIndexTemp + offset_ind - DIM;
 					peakAmplitudes[numberOfAnalyzedPeaks] = lastPeakAmplitudeTemp;
 					peakWidths[numberOfAnalyzedPeaks] = lastPeakWidth;
 					numberOfAnalyzedPeaks++;

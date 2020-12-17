@@ -6,9 +6,9 @@
 #include "../Morph_filt/defines_globals.h"
 #include "../error_detection/error_detection.h"
 
-#define N_WINDOWS (int) (2*((ECG_VECTOR_SIZE-LONG_WINDOW)/dim)+1)// Counting the worst case scenario when overlap is dim
+#define N_WINDOWS (int) (2*((ECG_VECTOR_SIZE-LONG_WINDOW)/DIM)+1)// Counting the worst case scenario when overlap is DIM
  
-RT_L2_DATA int16_t ecg_buff[(LONG_WINDOW+dim)*(NLEADS+1)];
+RT_L2_DATA int16_t ecg_buff[(LONG_WINDOW+DIM)*(NLEADS+1)];
 
 RT_L2_DATA rt_perf_t perf[NUM_CORES];
 
@@ -58,7 +58,7 @@ void adaptiveRpeakDetection(){
     int32_t flagMF = 0;
     int32_t i_lead = 0;
 
-    buffSize_windowMF = LONG_WINDOW+dim;
+    buffSize_windowMF = LONG_WINDOW+DIM;
 
     argMF[0] = (int32_t*) ecg_buff;
     argMF[1] = &flagMF;
@@ -69,10 +69,10 @@ void adaptiveRpeakDetection(){
 #endif
 
 #ifdef MODULE_RELEN    
-    buffSize_windowRelEn = LONG_WINDOW+dim;
+    buffSize_windowRelEn = LONG_WINDOW+DIM;
 
     argRelEn[0] = (int32_t*) ecg_buff;
-    argRelEn[1] = (int32_t*) &ecg_buff[(LONG_WINDOW+dim)*NLEADS];
+    argRelEn[1] = (int32_t*) &ecg_buff[(LONG_WINDOW+DIM)*NLEADS];
     argRelEn[2] = &start_RelEn;
     argRelEn[3] = &buffSize_windowRelEn;
 
@@ -82,7 +82,7 @@ void adaptiveRpeakDetection(){
 #ifdef MODULE_RPEAK_REWARD 
     int32_t rpeaks_counter = 0;
 
-    argRW_Rpeak[0] = (int32_t*) &ecg_buff[LONG_WINDOW+(LONG_WINDOW + dim)*NLEADS];
+    argRW_Rpeak[0] = (int32_t*) &ecg_buff[LONG_WINDOW+(LONG_WINDOW + DIM)*NLEADS];
     argRW_Rpeak[1] = indicesRpeaks;
     argRW_Rpeak[2] = &offset_ind;
 #endif
@@ -90,7 +90,7 @@ void adaptiveRpeakDetection(){
 
     for(rWindow=0; rWindow<N_WINDOWS; rWindow++)
     {
-        if((rWindow+1)*dim + LONG_WINDOW -1 - tot_overlap >= ECG_VECTOR_SIZE){
+        if((rWindow+1)*DIM + LONG_WINDOW -1 - tot_overlap >= ECG_VECTOR_SIZE){
             return;
         }
 
@@ -104,22 +104,22 @@ void adaptiveRpeakDetection(){
         if (rWindow > 0) {
             for(int32_t i=0; i<overlap; i++) {
 #ifdef OVERLAP_MF
-                ecg_buff[i+offset_window] = ecg_buff[(LONG_WINDOW + dim - overlap + i + offset_window)];
+                ecg_buff[i+offset_window] = ecg_buff[(LONG_WINDOW + DIM - overlap + i + offset_window)];
 #endif
 #ifdef OVERLAP_RELEN
-                ecg_buff[i + offset_window + (LONG_WINDOW + dim)*NLEADS] = ecg_buff[(2*(LONG_WINDOW + dim)*NLEADS - overlap + i + offset_window)];
+                ecg_buff[i + offset_window + (LONG_WINDOW + DIM)*NLEADS] = ecg_buff[(2*(LONG_WINDOW + DIM)*NLEADS - overlap + i + offset_window)];
 #endif                
             }
         }
 
         for(int32_t lead=0; lead<NLEADS; lead++) {
-            for(int32_t i=overlap + offset_window; i< LONG_WINDOW + dim; i++) {
-                ecg_buff[i + (dim+LONG_WINDOW)*lead] = ecg_1l[rWindow*dim + i - tot_overlap]; 
+            for(int32_t i=overlap + offset_window; i< LONG_WINDOW + DIM; i++) {
+                ecg_buff[i + (DIM+LONG_WINDOW)*lead] = ecg_1l[rWindow*DIM + i - tot_overlap]; 
             }
         }
 
 #ifdef PRINT_DEBUG
-        printf("start_window: %d end_window: %d overlap: %d\n", offset_window + rWindow*dim - tot_overlap,LONG_WINDOW -1 + (rWindow+1)*dim - tot_overlap,overlap);
+        printf("start_window: %d end_window: %d overlap: %d\n", offset_window + rWindow*DIM - tot_overlap,LONG_WINDOW -1 + (rWindow+1)*DIM - tot_overlap,overlap);
 #endif
 
 #ifdef MODULE_MF
@@ -128,14 +128,14 @@ void adaptiveRpeakDetection(){
             // Needed to initialize the MF filter properly
             for(int32_t lead=0; lead<NLEADS; lead++) {
                 for(int32_t i=0; i<=OFFSET_MF; i++) {
-                    ecg_buff[i + (dim+LONG_WINDOW)*lead] = 0;
+                    ecg_buff[i + (DIM+LONG_WINDOW)*lead] = 0;
                 }
             }
         }
 
         // MF on FC because not enough memory on Cluster
         argMF[0] = (int32_t*) &ecg_buff[offset_window + overlap];
-        buffSize_windowMF = LONG_WINDOW - offset_window + dim-overlap;
+        buffSize_windowMF = LONG_WINDOW - offset_window + DIM-overlap;
 
         for(i_lead = 0; i_lead < NLEADS; i_lead++){
             filterWindows(argMF);
@@ -144,7 +144,7 @@ void adaptiveRpeakDetection(){
         flagMF=1;
 
     #ifdef PRINT_SIG_MF
-        for(int32_t sample = offset_window; sample<LONG_WINDOW + dim; sample++) {
+        for(int32_t sample = offset_window; sample<LONG_WINDOW + DIM; sample++) {
             printf("%d\n", ecg_buff[sample]);
         }
     #endif
@@ -171,8 +171,8 @@ void adaptiveRpeakDetection(){
             start_RelEn = 0;
 
         argRelEn[0] = (int32_t*) &ecg_buff[offset_window + overlap];
-        argRelEn[1] = (int32_t*) &ecg_buff[offset_window + (LONG_WINDOW + dim)*NLEADS+overlap];
-        buffSize_windowRelEn = LONG_WINDOW - offset_window + dim-overlap;
+        argRelEn[1] = (int32_t*) &ecg_buff[offset_window + (LONG_WINDOW + DIM)*NLEADS+overlap];
+        buffSize_windowRelEn = LONG_WINDOW - offset_window + DIM-overlap;
 #endif        
 
         relEn_w(argRelEn);       
@@ -182,7 +182,7 @@ void adaptiveRpeakDetection(){
     #endif
 
     #ifdef PRINT_RELEN
-        for(int32_t sample = offset_window + (LONG_WINDOW + dim)*NLEADS; sample< (LONG_WINDOW + dim)*(NLEADS+1); sample++) {
+        for(int32_t sample = offset_window + (LONG_WINDOW + DIM)*NLEADS; sample< (LONG_WINDOW + DIM)*(NLEADS+1); sample++) {
             printf("%d\n", ecg_buff[sample]);
         }
     #endif
@@ -229,6 +229,10 @@ void adaptiveRpeakDetection(){
     #endif
 #endif        
 
+#ifdef MODULE_CLUSTERING
+
+#endif
+        
 #ifdef ONLY_FIRST_WINDOW //Only for debug
     return;
 #endif
@@ -241,7 +245,7 @@ void adaptiveRpeakDetection(){
 #endif
 
         tot_overlap += overlap;
-        offset_ind = offset_ind + dim - tot_overlap;        
+        offset_ind = offset_ind + DIM - tot_overlap;        
 
 #ifdef MODULE_RPEAK_REWARD        
         rpeaks_counter = 0;

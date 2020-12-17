@@ -1,4 +1,4 @@
-PULP_APP = delineation_app
+PULP_APP = adaptive_rpeak_detection
 
 PULP_APP_FC_SRCS  = main.c \
 				       adaptive_Rpeak_detection/adaptiveRpeakDetection.c \
