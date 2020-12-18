@@ -33,6 +33,11 @@
 //=========== R PEAK DETECTION PARAMETERS ===========//
 // #define NEGATIVE_PEAK //For ISSUL-EPFL dataset, comment this line. For QTDB used for publication in EMBC 2019 and ESWEEK 2020, uncomment.
 
+//=========== CLUSTERING PARAMETERS ===========//
+#define type_f float 
+#define type_i int 
+#define SIZE_PERCENTILE_ARR DIM*2//1000
+
 //======== DEFINE MODULES ==========//
 #define MODULE_MF
 #define MODULE_RELEN
@@ -40,6 +45,8 @@
 #ifdef MODULE_RPEAK_REWARD
 #define MODULE_ERROR_DETECTION
 #endif
+#define MODULE_CLUSTERING
+
 //======== DEFINE WINDOW OVERLAP ==========//
 // Copy the MF or the RelEn signal in the overlapping window. The two defines are mutually exclusive (only one can be uncommented)
 // #define OVERLAP_MF // not yet validated for this implementation
