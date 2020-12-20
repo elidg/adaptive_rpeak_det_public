@@ -40,12 +40,10 @@ RT_L2_DATA int32_t error_RWindow = 0;
 #endif
 
 #ifdef MODULE_CLUSTERING
-RT_L2_DATA int16_t ecg_L2buff_prev[DIM];
 RT_L2_DATA int32_t rL2BufferIndex;
 RT_L1_DATA int32_t rL1BufferIndex = 0;
 RT_L1_DATA int16_t ecg_L1buff[DIM*(NLEADS+1)]; 
 RT_L1_DATA int32_t end_main_loop;
-RT_L2_DATA int32_t flag_error_RWindow = 0;
 RT_L2_DATA int32_t* argCL[3];
 RT_L2_DATA rt_event_sched_t * psched = 0;
 RT_L2_DATA int32_t done = 0;
@@ -75,25 +73,19 @@ extern void end_of_call(void *arg)
   done = 1;
 }
 
-static void fCore0_DmaTransfer_Windows(void *arg)
+static void fCore0_DmaTransfer_Window(void *arg)
 {
   rt_dma_copy_t dmaCp;
-    
-#ifdef MODULE_ERROR_DETECTION    
-    if(flag_error_RWindow == 0){
-        // Copy data block previous window from L2 to shared L1 memory using the cluster DMA
-        rt_dma_memcpy((unsigned int)&ecg_L2buff_prev[0], (unsigned int)&ecg_L1buff[0], 2*DIM, RT_DMA_DIR_EXT2LOC, 0, &dmaCp);
-
-        // Wait for dma to finish
-        rt_dma_wait(&dmaCp);
-    }
-#endif    
-
-    // Copy data block current window from L2 to shared L1 memory using the cluster DMA
-    rt_dma_memcpy((unsigned int)&ecg_L2buff[rL2BufferIndex], (unsigned int)&ecg_L1buff[DIM], 2*DIM, RT_DMA_DIR_EXT2LOC, 0, &dmaCp);
+      
+    // Copy data block window from L2 to shared L1 memory using the cluster DMA
+    rt_dma_memcpy((unsigned int)&ecg_L2buff[rL2BufferIndex], (unsigned int)&ecg_L1buff[rL1BufferIndex], 2*DIM, RT_DMA_DIR_EXT2LOC, 0, &dmaCp);
 
     // Wait for dma to finish
     rt_dma_wait(&dmaCp);
+
+    // printf("rL1BufferIndex: %d endL1BufferIndex: %d\n",rL1BufferIndex,rL1BufferIndex+DIM );
+    for(int i=rL1BufferIndex; i<rL1BufferIndex+DIM;i++)
+        printf("%d\n",ecg_L1buff[i]);    
 }
 
 void adaptiveRpeakDetection(){
@@ -278,43 +270,6 @@ void adaptiveRpeakDetection(){
 
 #endif
 
-#ifdef MODULE_CLUSTERING
-    #ifdef MODULE_ERROR_DETECTION        
-        if(flag_error_RWindow == 0){ //Previous window or first window
-            rL1BufferIndex = 0;
-        }else{
-            rL1BufferIndex = DIM;
-        }
-    #else
-        rL1BufferIndex = DIM;
-    #endif    
-
-        rL2BufferIndex = LONG_WINDOW+(LONG_WINDOW + DIM)*NLEADS;
-        end_main_loop = DIM*(NLEADS+1);
-
-        // ----------------------------Copy ecg buffer from L2 to L1 memory ------------------------------------------------- //
-        // Initialize event
-        event = rt_event_get_blocking(NULL);
-
-        // Run function on Core 0 of the cluster
-        rt_cluster_call(NULL, 0, fCore0_DmaTransfer_Windows, NULL, NULL, STACK_SIZE, STACK_SIZE, 1, event);
-
-        // Wait for event
-        rt_event_wait(event);
-        // ---------------------------------------------------------------------------------------------------------------//
-
-    #ifdef MODULE_ERROR_DETECTION
-        if(flag_error_RWindow == 0){ //Previous window or first window
-            for(int32_t lead=0; lead<NLEADS; lead++) {
-                for(int32_t i= 0; i< DIM; i++) {
-                    ecg_L2buff_prev[i] = ecg_L2buff[(LONG_WINDOW + (LONG_WINDOW + DIM)*NLEADS) + i]; 
-                }
-            }
-        }
-    #endif        
-
-#endif
-
 #ifdef MODULE_ERROR_DETECTION
 
         argErrDet[0] = &rpeaks_counter;
@@ -331,14 +286,45 @@ void adaptiveRpeakDetection(){
 
 #ifdef MODULE_CLUSTERING
 
-    #ifdef MODULE_ERROR_DETECTION
-        if(error_RWindow == 1) 
-            flag_error_RWindow = 1; 
-        else 
-            flag_error_RWindow = 0;
-    #endif        
+    #ifdef MODULE_ERROR_DETECTION      
+        if(error_RWindow == 0 || rWindow == 0){ //Previous window or first window
+            rL1BufferIndex = 0;
+        }else{
+            rL1BufferIndex = DIM;
+        }
+    #else
+        rL1BufferIndex = DIM;
+    #endif    
 
+        rL2BufferIndex = LONG_WINDOW+(LONG_WINDOW + DIM)*NLEADS;
+        end_main_loop = DIM*(NLEADS+1);
+
+    #ifdef MODULE_ERROR_DETECTION    
+        if(error_RWindow == 0 || rWindow == 0){
+            // ----------------------------Copy previous window ecg buffer from L2 to L1 memory if error was 0 ------------------------------ //
+            // Initialize event
+            event = rt_event_get_blocking(NULL);
+
+            // Run function on Core 0 of the cluster
+            rt_cluster_call(NULL, 0, fCore0_DmaTransfer_Window, NULL, NULL, STACK_SIZE, STACK_SIZE, 1, event);
+
+            // Wait for event
+            rt_event_wait(event);
+            // ------------------------------------------------------------------------------------------------------------------------------//
+        }
         if(rWindow > 0 && error_RWindow == 1){
+    #endif        
+            // ----------------------------Copy current window ecg buffer from L2 to L1 memory if error was 1 ------------------------------ //
+            // Initialize event
+            event = rt_event_get_blocking(NULL);
+
+            // Run function on Core 0 of the cluster
+            rt_cluster_call(NULL, 0, fCore0_DmaTransfer_Window, NULL, NULL, STACK_SIZE, STACK_SIZE, 1, event);
+
+            // Wait for event
+            rt_event_wait(event);
+            // ------------------------------------------------------------------------------------------------------------------------------//
+
             argCL[0] = (int32_t*) &ecg_L1buff[rL1BufferIndex];
             argCL[1] = &rL1BufferIndex;
             argCL[2] = &end_main_loop;
@@ -346,7 +332,9 @@ void adaptiveRpeakDetection(){
             while(!done)
                 rt_event_execute(psched, 1);
             done = 0;
+    #ifdef MODULE_ERROR_DETECTION
         }
+    #endif
 #endif
 
 #ifdef ONLY_FIRST_WINDOW //Only for debug

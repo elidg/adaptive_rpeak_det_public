@@ -32,6 +32,14 @@
 
 //=========== R PEAK DETECTION PARAMETERS ===========//
 // #define NEGATIVE_PEAK //For ISSUL-EPFL dataset, comment this line. For QTDB used for publication in EMBC 2019 and ESWEEK 2020, uncomment.
+#define N 1
+#define H_B 30
+#define DIM  (int16_t) (BUFFER_SIZE * N) //((BUFFER_SIZE * N) + LONG_WINDOW)
+#if ECG_SAMPLING_FREQUENCY == 250
+#define OFFSET_MF 150
+#else
+#define OFFSET_MF 300
+#endif
 
 //=========== CLUSTERING PARAMETERS ===========//
 #define type_f float 
@@ -54,15 +62,6 @@
 
 //======== DEFINE WINDOWS (ONLY FOR DEBUG) ==========//
 // #define ONLY_FIRST_WINDOW
-
-#define N 1
-#define H_B 30
-#define DIM  (int16_t) (BUFFER_SIZE * N) //((BUFFER_SIZE * N) + LONG_WINDOW)
-#if ECG_SAMPLING_FREQUENCY == 250
-#define OFFSET_MF 150
-#else
-#define OFFSET_MF 300
-#endif
 
 //========= DEFINE PROFILING ================//
 // #define HWPERF_MODULE_RPEAK_REWARD	//start profiling module RPEAK

@@ -15,7 +15,7 @@ void __attribute__ ((noinline)) shift16();
 
 
 //FOR PARALLEL EXECUTION
-#define STACK_SIZE      1024
+#define STACK_SIZE      2048
 #define MOUNT           1
 #define UNMOUNT         0
 #define CID             0
