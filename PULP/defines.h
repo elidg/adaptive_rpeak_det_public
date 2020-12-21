@@ -1,18 +1,23 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_ 
 
-//========= DEFINE PRINT OUTPUT ========//
-// #define PRINT_SIG_MF
-// #define PRINT_RELEN
-// #define PRINT_RPEAKS
-#define PRINT_ERROR_RPEAKS
-
 //========= DEFINE PRINT DEBUG =========//
-// #define PRINT_DEBUG
+// #define PRINT_DEBUG_WINDOW
 // #define PRINT_SIG_INPUT_PEAKS
 // #define PRINT_THR
 // #define PRINT_RPEAKS_BEFORE_T_CHECK
 // #define PRINT_DEBUG_ERRDET
+// #define PRINT_INITIAL_HCENTR
+// #define PRINT_ABS_DIFF
+// #define PRINT_GAUSS
+// #define PRINT_GAUSS_MU_SD
+// #define PRINT_GENLOGFUN
+// #define PRINT_BAYFILT
+// #define PRINT_CENTROIDS
+// #define PRINT_OVERLAPS
+// #define PRINT_DEBUG_STD
+// #define PRINT_DEBUG_CL
+// #define PRINT_RPEAKS_DEBUG
 
 //=========== Sampling frequency ========== //
 #define ECG_SAMPLING_FREQUENCY 250
@@ -54,6 +59,13 @@
 #define MODULE_ERROR_DETECTION
 #endif
 #define MODULE_CLUSTERING
+
+//========= DEFINE PRINT OUTPUT ========//
+// #define PRINT_SIG_MF
+// #define PRINT_RELEN
+// #define PRINT_RPEAKS
+// #define PRINT_ERROR_RPEAKS
+#define PRINT_RPEAKS_CL
 
 //======== DEFINE WINDOW OVERLAP ==========//
 // Copy the MF or the RelEn signal in the overlapping window. The two defines are mutually exclusive (only one can be uncommented)

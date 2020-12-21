@@ -9,7 +9,8 @@ PULP_APP_FC_SRCS  = main.c \
 				       profiling/profile.c \
 				       profiling/profile_cl.c  
 
-PULP_APP_CL_OMP_SRCS  = test_double_buffering.c
+PULP_APP_CL_OMP_SRCS  = kmeans_clustering/kmean/k_mean_functions.c \
+						kmeans_clustering/search/search_functions.c
 
 CORES  ?= 1
 CTARGET ?= 1
