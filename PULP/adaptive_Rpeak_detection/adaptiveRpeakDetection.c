@@ -41,8 +41,9 @@ RT_L2_DATA int32_t error_RWindow = 0;
 
 #ifdef MODULE_CLUSTERING
 RT_L2_DATA int32_t rL2BufferIndex;
-RT_L1_DATA int32_t rL1BufferIndex = 0;
+RT_L2_DATA int32_t rL1BufferIndex = 0;
 RT_L1_DATA int16_t ecg_L1buff[DIM*(NLEADS+1)]; 
+RT_L1_DATA int32_t start_index_w = 0;
 RT_L1_DATA int32_t end_main_loop;
 RT_L2_DATA int32_t* argCL[3];
 RT_L2_DATA rt_event_sched_t * psched = 0;
@@ -84,8 +85,8 @@ static void fCore0_DmaTransfer_Window(void *arg)
     rt_dma_wait(&dmaCp);
 
     // printf("rL1BufferIndex: %d endL1BufferIndex: %d\n",rL1BufferIndex,rL1BufferIndex+DIM );
-    for(int i=rL1BufferIndex; i<rL1BufferIndex+DIM;i++)
-        printf("%d\n",ecg_L1buff[i]);    
+    // for(int i=rL1BufferIndex; i<rL1BufferIndex+DIM;i++)
+    //     printf("%d\n",ecg_L1buff[i]);    
 }
 
 void adaptiveRpeakDetection(){
@@ -268,10 +269,17 @@ void adaptiveRpeakDetection(){
         }
     #endif
 
-#endif
+#endif        
 
 #ifdef MODULE_ERROR_DETECTION
 
+    #ifdef MODULE_CLUSTERING
+        if(error_RWindow == 0){
+            start_index_w = 0;
+        }else{
+            start_index_w = DIM;
+        }
+    #endif
         argErrDet[0] = &rpeaks_counter;
         argErrDet[1] = &rWindow; 
         argErrDet[2] = &lastRR;        
@@ -294,6 +302,7 @@ void adaptiveRpeakDetection(){
         }
     #else
         rL1BufferIndex = DIM;
+        start_index_w = DIM;
     #endif    
 
         rL2BufferIndex = LONG_WINDOW+(LONG_WINDOW + DIM)*NLEADS;
@@ -325,8 +334,8 @@ void adaptiveRpeakDetection(){
             rt_event_wait(event);
             // ------------------------------------------------------------------------------------------------------------------------------//
 
-            argCL[0] = (int32_t*) &ecg_L1buff[rL1BufferIndex];
-            argCL[1] = &rL1BufferIndex;
+            argCL[0] = (int32_t*) ecg_L1buff; //The start index is the one in argCL[1]
+            argCL[1] = &start_index_w;
             argCL[2] = &end_main_loop;
             rt_cluster_call(NULL, CID, cluster_test_doublebuff, argCL, NULL, 2048, 2048, NUM_CORES, rt_event_get(psched, end_of_call, (void *) CID));
             while(!done)

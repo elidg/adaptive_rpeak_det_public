@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 void testDoubleBuff(int32_t* arg[]){
-	int16_t* ecg_buff = (int16_t*) arg[0];
+	int16_t* ecg_buff = (int16_t*) arg[0]; // pointing at ecg_buff from 0 and then using start_index_w and end_main_loop to use the correct part of the buffer
 	int32_t start_index_w = *(arg[1]);
 	int32_t end_main_loop = *(arg[2]);
 
