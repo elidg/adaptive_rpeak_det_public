@@ -143,33 +143,29 @@ void rpeaks(int32_t *arg[]){
 	int number_of_window = *(arg[1]); 
 	int start_index_buff = *(arg[2]);
 	int end_main_loop = *(arg[3]) - start_index_buff;
-	int16_t *ecg_buff = &ecg_buff_full[start_index_buff];
 	int start_index_w = *(arg[4]);
 	int flag_prev_error = *(arg[5]);
 	int32_t *indicesRpeaks = arg[6];
+	int32_t *overlap = arg[7];
 	int ind_peak = 0;
 
     for(int ix_rr = 0; ix_rr<H_B+1; ix_rr++)
         indicesRpeaks[ix_rr] = 0;
 
 	if(flag_prev_error==1){
-		start_index_buff = start_index_buff-1;
-		start_index_w = start_index_w-1;
+		start_index_buff = start_index_buff-*overlap;
+		start_index_w = start_index_w-*overlap;
 	}else{
 		start_index_w = start_index_w - DIM;
+		*overlap = 0;
 	}
+
+	int16_t *ecg_buff = &ecg_buff_full[start_index_buff];
 
 	type_f x = 0.0f;
 	type_f param_log = 0.0f;
 	type_f param_log2 = 0.0f;
 	type_f new_val = 0.0f;
-
-	if(start_index_buff == 0){
-		in_qrs = 0;
-		zeroctr = 0; //if overlap = end_main_loop - end_last_peak - 1; 
-		qrs_init = 0;	
-		index_st = 0;	
-	}
 
 #ifdef PRINT_DEBUG_CL
 
@@ -187,10 +183,10 @@ void rpeaks(int32_t *arg[]){
 	}
 
 #ifdef PRINT_DEBUG_CL
-	printf("number_of_window: %d start_index_buff: %d end_main_loop: %d start_index_w: %d\n", number_of_window,start_index_buff,end_main_loop,start_index_w);
+	printf("number_of_window: %d start_index_buff: %d end_main_loop: %d start_index_w: %d\n", number_of_window,start_index_buff,end_main_loop + *overlap,start_index_w);
 #endif	
 
-	for(int i = 1; i < end_main_loop; i++){
+	for(int i = 1; i < end_main_loop + *overlap; i++){
 
 		x = fabs((type_f) (ecg_buff[i] - ecg_buff[i-1]));
 
@@ -200,12 +196,12 @@ void rpeaks(int32_t *arg[]){
 #endif
 
 		//====== Uncomment if you are using end_last_peak for overlap ======//
-		// if(number_of_window > 0 && i==1){
-		// 	hcentr = centroids_state[0];
-		// 	lcentr = centroids_state[1];
-		// 	h_el = (type_i) centroids_state[2];
-		// 	l_el = (type_i) centroids_state[3];
- 	// 	}
+		if(*overlap==end_main_loop - end_last_peak - 1 && i==1){
+			hcentr = centroids_state[0];
+			lcentr = centroids_state[1];
+			h_el = (type_i) centroids_state[2];
+			l_el = (type_i) centroids_state[3];
+ 		}
  		//====== Uncomment if you are using end_last_peak for overlap ======//
 
 		//====== Uncomment if you are using qrs_init for overlap ======//
@@ -362,7 +358,7 @@ void rpeaks(int32_t *arg[]){
 		        		indicesRpeaks[ind_peak] = last_peak;
 		        		ind_peak++;
 #ifdef PRINT_RPEAKS_DEBUG	       
-		        		printf("%d\n", last_peak); 
+		        		printf("ecg_buff_peak: %d last_peak: %d\n", new_peak, last_peak); 
 #endif			        		
 		        	}
 	         		if(num_peaks == MAX_PEAKS_IN_WIND){
@@ -425,6 +421,18 @@ void rpeaks(int32_t *arg[]){
 	if(number_of_window==num_wind_to_check-1) 
 		printf("END OF WINDOW qrs_init: %d qrs_init_total: %d last_peak: %d mu: %f std: %f index_st: %d new_peak: %d\n",qrs_init,qrs_init_total,last_peak,mu,sd, index_st-1,new_peak);
 #endif
+	*overlap = end_main_loop + *overlap - end_last_peak - 1; // - qrs_init; // Using qrs_init gives some problems if the peak is a little bit before than qrs_init. This logically shouln't happen but unfortunately it happens because the python code is not perfect (probably needing some tweeking in the variable representing the duration of the qrs)
+	if(last_peak < start_index_w){
+		if(in_qrs == 0)
+			*overlap = 1;
+		else
+			*overlap = end_main_loop + *overlap - (qrs_init - max_qrs_dur) - 1;
+	}
+
+	in_qrs = 0;
+	zeroctr = 0; //if overlap = end_main_loop - end_last_peak - 1; 
+	qrs_init = 0;	
+	index_st = 0;	
 
 }
  

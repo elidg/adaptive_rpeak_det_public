@@ -46,7 +46,8 @@ RT_L1_DATA int16_t ecg_L1buff[DIM*(NLEADS+1)];
 RT_L2_DATA int32_t start_index_buff = 0;
 RT_L2_DATA int32_t end_main_loop;
 RT_L2_DATA int32_t flag_prev_error = 0;
-RT_L2_DATA int32_t* argCL[7];
+RT_L2_DATA int32_t* argCL[8];
+RT_L1_DATA int32_t overlapCL = 1;
 RT_L1_DATA int32_t* indicesRpeaksCL[H_B+1];
 RT_L2_DATA int32_t rpeaks_counter_cl;
 RT_L2_DATA rt_event_sched_t * psched = 0;
@@ -173,7 +174,7 @@ void adaptiveRpeakDetection(){
         }
 
 #ifdef PRINT_DEBUG_WINDOW
-        printf("start_window: %d end_window: %d overlap: %d\n", offset_window + rWindow*DIM - tot_overlap,LONG_WINDOW -1 + (rWindow+1)*DIM - tot_overlap,overlap);
+        printf("start_window: %d end_window: %d overlapCL: %d offset_ind: %d\n", offset_window + rWindow*DIM - tot_overlap,LONG_WINDOW -1 + (rWindow+1)*DIM - tot_overlap,overlapCL, offset_ind);
 #endif
 
 #ifdef MODULE_MF
@@ -348,6 +349,7 @@ void adaptiveRpeakDetection(){
             argCL[4] = &offset_ind;
             argCL[5] = &flag_prev_error;
             argCL[6] = indicesRpeaksCL;
+            argCL[7] = &overlapCL;
             rt_cluster_call(NULL, CID, cluster_Rpeaks, argCL, NULL, STACK_SIZE, STACK_SIZE, NUM_CORES, rt_event_get(psched, end_of_call, (void *) CID));
             while(!done)
                 rt_event_execute(psched, 1);
@@ -356,7 +358,8 @@ void adaptiveRpeakDetection(){
             // Move last sample to index DIM-1 of L1 buffer for the next window (this is necessary if the clustering module runs without error detection 
             // or if the previous error was 1 and the clustering must keep running)
             // The clustering uses the approximated signal derivative (a diff function), so it needs the last sample of the previous window to not miss anything
-            ecg_L1buff[DIM-1] = ecg_L1buff[end_main_loop];
+            for(int ix_ov = 0; ix_ov < overlapCL; ix_ov++)
+                ecg_L1buff[DIM-overlapCL+ix_ov] = ecg_L1buff[end_main_loop-overlapCL+ix_ov];
 
             flag_prev_error = 1;
 
