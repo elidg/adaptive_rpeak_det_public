@@ -330,7 +330,10 @@ void adaptiveRpeakDetection(){
             // ------------------------------------------------------------------------------------------------------------------------------//
         }else{
             rL1BufferIndex = DIM;
-            start_index_buff = DIM;
+            if(rWindow == 1)
+                start_index_buff = 0;
+            else
+                start_index_buff = DIM;
     #endif       
             // ----------------Copy current window ecg buffer from L2 to L1 memory if error was 1 or after first window--------------------- //
             // Initialize event
