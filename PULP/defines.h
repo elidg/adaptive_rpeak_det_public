@@ -62,8 +62,8 @@
 #define MODULE_CLUSTERING
 
 //======== DEFINE PERFORMANCE OUTPUT ========//
-// #define ACCURACY
-#define PROFILING
+#define ACCURACY
+// #define PROFILING
 
 //========= DEFINE PRINT OUTPUT ========//
 // #define PRINT_SIG_MF

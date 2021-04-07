@@ -486,7 +486,7 @@ void adaptiveRpeakDetection(){
             }
 
             for(int ix_rr=0; ix_rr<rpeaks_counter_cl; ix_rr++){
-                printf("CL: %d\n",indicesRpeaksCL[ix_rr]);
+                printf("BS: %d\n",indicesRpeaksCL[ix_rr]);
             }
     #endif            
         }
