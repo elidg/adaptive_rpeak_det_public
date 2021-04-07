@@ -134,8 +134,6 @@ RT_L1_DATA type_i rpks[MAX_PEAKS_IN_WIND];
 RT_L1_DATA int end_qrs = 0;
 RT_L1_DATA int max_min_slope[2];
 RT_L1_DATA int max_min_slope_productSign[2];
-RT_L1_DATA int max_qrs_dur = 35; //50, 35
-RT_L1_DATA int min_rr_dist = 60; //50, 60
 
 void rpeaks(int32_t *arg[]){
 	
@@ -147,6 +145,7 @@ void rpeaks(int32_t *arg[]){
 	int flag_prev_error = *(arg[5]);
 	int32_t *indicesRpeaks = arg[6];
 	int32_t *overlap = arg[7];
+	int32_t *overlap_qrs_init = arg[8];
 	int ind_peak = 0;
 
     for(int ix_rr = 0; ix_rr<H_B+1; ix_rr++)
@@ -183,8 +182,17 @@ void rpeaks(int32_t *arg[]){
 	}
 
 #ifdef PRINT_DEBUG_CL
-	printf("number_of_window: %d start_index_buff: %d end_main_loop: %d start_index_w: %d\n", number_of_window,start_index_buff,end_main_loop + *overlap,start_index_w);
+	printf("number_of_window: %d start_index_buff: %d end_main_loop: %d start_index_w: %d overlap: %d\n", number_of_window,start_index_buff,end_main_loop + *overlap,start_index_w,*overlap);
 #endif	
+
+#ifdef PRINT_INPUT_SIG_CL
+	if(number_of_window == num_wind_to_check){
+		for(int i = 0; i < end_main_loop + *overlap; i++){
+			printf("%d,",ecg_buff[i] );
+		}
+		printf("\n");
+	}
+#endif
 
 	for(int i = 1; i < end_main_loop + *overlap; i++){
 
@@ -293,7 +301,7 @@ void rpeaks(int32_t *arg[]){
 	        	printf("qrs_init: %d zeroctr: %d qrs_init_total: %d\n", qrs_init, zeroctr, qrs_init_total);
 #endif	        
 	        // Once a QRS has been detected, we look for 120ms of 0 output (30 samples) or 200ms to consider that the QRS has finished.
-	   		if(zeroctr==30 || start_index_w + (i-1) - qrs_init_total > max_qrs_dur){
+	   		if(zeroctr==30 || start_index_w + (i-1) - qrs_init_total > MAX_QRS_DUR){
 	                  
 #ifdef PRINT_DEBUG_CL
 	   			if(number_of_window==num_wind_to_check) 
@@ -401,7 +409,7 @@ void rpeaks(int32_t *arg[]){
 	               
 
 	    }else{
-	        if(label==1 && start_index_w + (i-1) > last_peak + min_rr_dist){
+	        if(label==1 && start_index_w + (i-1) > last_peak + MIN_RR_DIST){
 	            in_qrs = 1;
 	            qrs_init = i-1; 
 	            qrs_init_total = start_index_w + (i-1);
@@ -421,12 +429,24 @@ void rpeaks(int32_t *arg[]){
 	if(number_of_window==num_wind_to_check-1) 
 		printf("END OF WINDOW qrs_init: %d qrs_init_total: %d last_peak: %d mu: %f std: %f index_st: %d new_peak: %d\n",qrs_init,qrs_init_total,last_peak,mu,sd, index_st-1,new_peak);
 #endif
-	*overlap = end_main_loop + *overlap - end_last_peak - 1; // - qrs_init; // Using qrs_init gives some problems if the peak is a little bit before than qrs_init. This logically shouln't happen but unfortunately it happens because the python code is not perfect (probably needing some tweeking in the variable representing the duration of the qrs)
+
+	if(in_qrs == 1)
+		*overlap_qrs_init = end_main_loop + *overlap - qrs_init - 1;
+	else
+		*overlap_qrs_init = 0;
+
+#ifdef PRINT_DEBUG_CL
+	if(number_of_window==num_wind_to_check-1) 
+		printf("end_main_loop: %d overlap: %d qrs_init: %d overlap_qrs_init: %d\n",end_main_loop,*overlap,qrs_init, *overlap_qrs_init);
+#endif
+
 	if(last_peak < start_index_w){
 		if(in_qrs == 0)
 			*overlap = 1;
 		else
-			*overlap = end_main_loop + *overlap - (qrs_init - max_qrs_dur) - 1;
+			*overlap = end_main_loop + *overlap - (qrs_init - MAX_QRS_DUR) - 1;
+	}else{
+		*overlap = end_main_loop + *overlap - end_last_peak - 1; // - qrs_init; // Using qrs_init gives some problems if the peak is a little bit before than qrs_init. This logically shouln't happen but unfortunately it happens because the python code is not perfect (probably needing some tweeking in the variable representing the duration of the qrs)
 	}
 
 	in_qrs = 0;

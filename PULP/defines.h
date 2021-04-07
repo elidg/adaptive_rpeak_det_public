@@ -8,6 +8,7 @@
 // #define PRINT_RPEAKS_BEFORE_T_CHECK
 // #define PRINT_DEBUG_ERRDET
 // #define PRINT_INITIAL_HCENTR
+// #define PRINT_INPUT_SIG_CL
 // #define PRINT_ABS_DIFF
 // #define PRINT_GAUSS
 // #define PRINT_GAUSS_MU_SD
@@ -60,12 +61,18 @@
 #endif
 #define MODULE_CLUSTERING
 
+//======== DEFINE PERFORMANCE OUTPUT ========//
+// #define ACCURACY
+#define PROFILING
+
 //========= DEFINE PRINT OUTPUT ========//
 // #define PRINT_SIG_MF
 // #define PRINT_RELEN
-// #define PRINT_RPEAKS
-// #define PRINT_ERROR_RPEAKS
+#ifdef ACCURACY
+#define PRINT_RPEAKS
+#define PRINT_ERROR_RPEAKS
 #define PRINT_RPEAKS_CL
+#endif
 
 //======== DEFINE WINDOW OVERLAP ==========//
 // Copy the MF or the RelEn signal in the overlapping window. The two defines are mutually exclusive (only one can be uncommented)
@@ -76,15 +83,18 @@
 // #define ONLY_FIRST_WINDOW
 
 //========= DEFINE PROFILING ================//
+#ifdef PROFILING
 // #define HWPERF_MODULE_RPEAK_REWARD	//start profiling module RPEAK
 // #define HWPERF_MODULES	//start profiling separate modules
-// #define HWPERF_FULL	//start profiling full app (N.B. it will profile also some buffering)
-// #define ACTIVE
+#define HWPERF_FULL	//start profiling full app (N.B. it will profile also some buffering)
+#define HWPERF_CLUSTER
+#define ACTIVE
 //#define EXTACC		//# of loads and stores in EXT memory (L2)
 //#define INTACC		//# of loads and stores in INT memory (L1)
 //#define STALL			//# number of core stalls
 //#define INSTRUCTION	//# number of instructions
 //#define TCDM			//# of conflicts in TCDM (L1 memory) between cores 
+#endif
 
 #define PULP_L1_DATA RT_L2_DATA
 #define PULP_L2_DATA RT_L2_DATA

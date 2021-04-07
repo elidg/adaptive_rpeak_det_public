@@ -7,7 +7,7 @@ void profile_start(rt_perf_t *perf){
  
 		int id = rt_core_id();
 		if(id==0){
-			printf("\nstart profile\n");
+			printf("\nstart profile FC\n");
 		}
 	 	rt_perf_init(&perf[id]); 
 		 
@@ -43,7 +43,7 @@ void profile_stop(rt_perf_t *perf){
 
 #ifdef ACTIVE
 		printf("[%d] cycles = %d\n", id, rt_perf_read (RT_PERF_CYCLES));
- 		printf("[%d] active cycles = %d\n", id, rt_perf_read (RT_PERF_ACTIVE_CYCLES));
+ 		printf("[%d] active cycles = %d\n\n", id, rt_perf_read (RT_PERF_ACTIVE_CYCLES));
 #endif
 #ifdef STALL
  		printf("[%d] LD stall = %d\n", id, rt_perf_read (RT_PERF_LD_STALL));
@@ -63,6 +63,5 @@ void profile_stop(rt_perf_t *perf){
 #ifdef TCDM
  		printf("[%d] RT_PERF_TCDM_CONT = %d\n", id, rt_perf_read (RT_PERF_TCDM_CONT));	
 #endif
-
 }
  

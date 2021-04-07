@@ -1,17 +1,19 @@
 #include "./error_detection.h"
 
+int32_t RR_intervals[H_B+2];
+
 int errorDetection(int32_t *arg[]){
 	int32_t *r_counter = arg[0];
     int32_t *rWindow = arg[1];
     int32_t *lastRRp = arg[2];
     int32_t *indRpeaks = arg[3];
     int32_t *lastPeak = arg[4];
-    int32_t RR_intervals[H_B+2];
     int32_t ratioConsecutiveRR = 0;
     int32_t offset_ind_rr = -1;
     int32_t rr_counter = 0;
+    int32_t prev_r_counter = *r_counter;
 
-    for(int32_t ix_rr = 0; ix_rr < H_B ; ix_rr++) {
+    for(int32_t ix_rr = 0; ix_rr < H_B+2; ix_rr++) {
        RR_intervals[ix_rr] = 0;
     }
 
@@ -52,8 +54,24 @@ int errorDetection(int32_t *arg[]){
         else
             rr_counter = *r_counter+1;
 
-        *lastPeak = indRpeaks[*r_counter-1];
-        *lastRRp = RR_intervals[rr_counter-1];
+        if(*lastRRp == 0){
+            rr_counter = rr_counter-1;
+        }
+
+#ifdef PRINT_DEBUG_ERRDET
+        printf("rr_counter: %d\n", rr_counter);
+#endif        
+        if(*r_counter>0){
+            *lastPeak = indRpeaks[*r_counter-1];
+        }
+        if(rr_counter>0){
+            *lastRRp = RR_intervals[rr_counter-1];
+        }
+
+        if(*rWindow == 1 && *r_counter==1 && prev_r_counter == 1){
+            return 1;
+        }
+
 #ifdef PRINT_DEBUG_ERRDET
         printf("lastPeak: %d lastRR: %d\n",*lastPeak,*lastRRp );
 #endif  

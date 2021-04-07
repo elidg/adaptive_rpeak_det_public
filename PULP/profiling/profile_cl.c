@@ -8,7 +8,7 @@ void profile_cl_start(rt_perf_t *perf){
  
 		int id = rt_core_id();
 		if(rt_core_id()==0){
-			printf("\nstart profile\n");
+			printf("start profile CL\n");
 		}
 	 	rt_perf_init(&perf[id]); 
 		 
