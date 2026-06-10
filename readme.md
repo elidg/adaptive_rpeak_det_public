@@ -1,6 +1,6 @@
 This repository contains an adaptive R peak detection algorithm implemented for the [PULP platform](https://github.com/pulp-platform/) with the following steps:
 
-1) The [REWARD](https://infoscience.epfl.ch/record/265401) algorithm detects the R peaks and runs all the time as it is low complex. The algorithm runs on the main core of PULP. 
+1) The [REWARD](https://infoscience.epfl.ch/record/273227) algorithm detects the R peaks and runs all the time as it is low complex. The algorithm runs on the main core of PULP. 
 2) An error detection routine checks if REWARD performs well. If not, point 3) is triggered. This routine also runs on the main core of PULP. 
 3) A more accurate but more complex algorithm BayeSlope runs on the same window of analysis. This algorithm runs on 1 core of the cluster of PULP as it is more capable (floating point unit, higher IPC). 
 
