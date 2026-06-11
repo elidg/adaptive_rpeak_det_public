@@ -1,4 +1,4 @@
-This repository contains an adaptive R peak detection algorithm implemented for the [PULP platform](https://github.com/pulp-platform/) with the following steps:
+This repository contains an adaptive R peak detection algorithm implemented for the [PULP platform](https://github.com/pulp-platform/) (folder **PULP/**) and for the **gcc** compiler (folder **C/**) with the following steps:
 
 1) The [REWARD](https://infoscience.epfl.ch/record/273227) algorithm detects the R peaks and runs all the time as it is low complex. The algorithm runs on the main core of PULP. 
 2) An error detection routine checks if REWARD performs well. If not, point 3) is triggered. This routine also runs on the main core of PULP. 
@@ -9,6 +9,11 @@ Additionally, the repo contains:
 - the error detection parameters in the file **error_detection/input_errdet.csv**, containing the subject number, and the low and high percentiles of the distribution of the RR ratio computed on the full set of signals with a leave-one-out strategy for each subject. 
 These input signals and parameters can be used to test the algorithm. The input signal should be assigned to the `ecg_1l` array in **data/signal.h**, while the error detection parameters to `PERCENTILE_LOO_LOW` and `PERCENTILE_LOO_HIGH` in *error_detection.h* 
 
+For the *C version*:
+- The Python script **compute_rpeaks_bayeslope.py** compiles the C code in gcc and computes the morphological filtered signal, the relative energy signal and the R peaks using the Bayeslope algorithm on the dataset provided in the folder **C/data/**. The script saves the results in the **Results** folder and plots them (flagBS = 1). If flagBS = 0, it will run the full Adaptive R Peak Detection, but only saves the output as it is structured differently (see *PULP version*). 
+- The Python script **change_code_inputs.py** is used by the main script to change the inputs, parameters and outputs of the C code.
+
+For the *PULP version*:
 To run the accuracy uncomment `#define ACCURACY`, while to run the profiling uncomment `#define PROFILING`. 
 - The accuracy output shows the R peaks from REWARD with the tag **RW**, the error detection with the tag **Err** and BayeSlope with the tag **BS** (in the dataset outputs the tag for BayeSlope might be **CL**). To test the accuracy you can configure PULP with the [gvsoc platform](https://github.com/pulp-platform/pulp-sdk/blob/v1/configs/platform-gvsoc.sh) for faster simulations and execute `make clean all run` in the **PULP/** folder of this repo. 
 - The algorithm is divided in modules that you can profile together or separated. At this moment, the profiling is divided in the one from the main core and the one from the cluster. They can be distinguished in the output by the printf **start profile FC**, which indicates the main core, and **start profile CL**, which indicates the cluster. The profiling is done for every window. You can sum up the output to have the total profiling over each window or the full excerpt. To test that the profiling works, you can configure PULP with the [gvsoc platform](https://github.com/pulp-platform/pulp-sdk/blob/v1/configs/platform-gvsoc.sh) for faster simulations and execute `make clean all run` in the PULP/ folder of this repo. However, do not use the results from the gvsoc to estimate the energy consumption (next point), as they are not cycle-accurate. 
