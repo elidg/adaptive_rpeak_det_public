@@ -72,13 +72,14 @@ uint16_t getRelEnCoefficients(uint8_t fillingBuffer, int16_t sample) {
  
 		uint16_t result = 0;
  
-		if (lastLongEnergy > multiplier) {
-			result = lastShortEnergy / (lastLongEnergy / multiplier);
+ 		if(lastLongEnergy != 0){
+			if (lastLongEnergy > multiplier) {
+				result = lastShortEnergy / (lastLongEnergy / multiplier);
+			}
+			else {
+				result = (lastShortEnergy * multiplier) / lastLongEnergy;
+			}
 		}
-		else {
-			result = (lastShortEnergy * multiplier) / lastLongEnergy;
-		}
-
 		return result;
  
 	}
