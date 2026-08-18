@@ -46,11 +46,11 @@ for file in input_files:
 	ecg_raw = df_sig.values[:,0]
 
 	# Change input signal and error detection parameters in C code
-	cc.change_input_signal_C(ecg_raw)
-	cc.change_input_error_detection_C(subject,perc_loo_low,perc_loo_high)
+	cc.change_input_signal_C(folderCode,ecg_raw)
+	cc.change_input_error_detection_C(folderCode,subject,perc_loo_low,perc_loo_high)
 
 	# Output morphological filtered signal
-	cc.change_output('MF')
+	cc.change_output(folderCode,'MF')
 	subprocess.call(["make", "clean", "all","run"], cwd=folderCode) 
 	# Copy output file to results folder
 	shutil.copy(folderCode + "output.txt",folderResults + "mf_" + filename + ".txt") 
@@ -60,7 +60,7 @@ for file in input_files:
 	t = np.linspace(0,len(ecg_mf)/fs,len(ecg_mf))
 
 	# Output relative energy signal
-	cc.change_output('RELEN')
+	cc.change_output(folderCode,'RELEN')
 	subprocess.call(["make", "clean", "all","run"], cwd=folderCode) 
 	# Copy output file to results folder
 	shutil.copy(folderCode + "output.txt",folderResults + "relen_" + filename + ".txt") 
@@ -69,8 +69,8 @@ for file in input_files:
 	ecg_relen = df_relen.values[:,0]	
 
 	# Run the C code for the R peak detection
-	cc.change_algorithm(flagBS)
-	cc.change_output('Rpeaks')
+	cc.change_algorithm(folderCode,flagBS)
+	cc.change_output(folderCode,'Rpeaks')
 	subprocess.call(["make", "clean", "all","run"], cwd=folderCode) 
 	# Copy output file to results folder
 	shutil.copy(folderCode + "output.txt",folderResults + "rpeaks_" + str_alg + filename + ".txt") 

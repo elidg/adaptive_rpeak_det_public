@@ -1,9 +1,7 @@
 # Library to change inputs, parameters and outputs of C code
 
-folderCode = './C/'
-
 # Change input signal in C code
-def change_input_signal_C(sig):
+def change_input_signal_C(folderCode,sig):
 	# read a list of lines into data
 	with open(folderCode + 'data/signal.h', 'r') as file:
 		data = file.readlines()
@@ -19,7 +17,7 @@ def change_input_signal_C(sig):
 		file.writelines( data )
 
 # Change error detection input (percentile of Leave-One-Subject-Out distribution)
-def change_input_error_detection_C(subject, perc_low, perc_high):
+def change_input_error_detection_C(folderCode,subject, perc_low, perc_high):
 	# read a list of lines into data
 	with open(folderCode + 'error_detection/error_detection.h', 'r') as file:
 		data = file.readlines()
@@ -33,7 +31,7 @@ def change_input_error_detection_C(subject, perc_low, perc_high):
 		file.writelines( data )
 
 # Change defines.h to run only BayeSlope or full Adaptive R Peak Detection
-def change_algorithm(flagBS):
+def change_algorithm(folderCode,flagBS):
 	# read a list of lines into data
 	with open(folderCode + 'defines.h', 'r') as file:
 		data = file.readlines()
@@ -49,7 +47,7 @@ def change_algorithm(flagBS):
 		file.writelines( data )
 
 # Change defines.h to run only BayeSlope or full Adaptive R Peak Detection
-def change_output(flagOutput):
+def change_output(folderCode,flagOutput):
 	# read a list of lines into data
 	with open(folderCode + 'defines.h', 'r') as file:
 		data = file.readlines()
